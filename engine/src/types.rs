@@ -248,6 +248,8 @@ pub enum InvalidIdentError {
     ReservedName(String),
 }
 
+const DOUBLE_UNDERSCORE_ALLOWLIST: [&str; 1] = ["pxrReserved"];
+
 /// cxx doesn't allow identifiers containing __. These are OK elsewhere
 /// in our output mod. It would be nice in future to think of a way we
 /// can enforce this using the Rust type system, e.g. a newtype
@@ -260,7 +262,11 @@ pub fn validate_ident_ok_for_cxx(id: &str) -> Result<(), InvalidIdentError> {
         Err(InvalidIdentError::Bitfield)
     } else if id.starts_with("__BindgenUnionField") {
         Err(InvalidIdentError::Union)
-    } else if id.contains("__") {
+    } else if id.contains("__")
+        && !DOUBLE_UNDERSCORE_ALLOWLIST
+            .iter()
+            .any(|allowlist| id.contains(allowlist))
+    {
         Err(InvalidIdentError::TooManyUnderscores)
     } else if id.starts_with("_bindgen_ty_") {
         Err(InvalidIdentError::BindgenTy)
